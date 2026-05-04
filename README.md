@@ -77,6 +77,11 @@ C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:B站
 
 用 Inno Setup 打开 `setup.iss`，点击编译即可。
 
+## 作者
+
+- **qhc147** — 开发者
+- Claude — AI 辅助开发
+
 ## 目录结构
 
 ```
