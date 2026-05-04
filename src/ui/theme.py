@@ -1,0 +1,66 @@
+class Colors:
+    BG_MAIN = "#1a1a2e"
+    BG_CARD = "#16213e"
+    BG_INPUT = "#0f3460"
+    BG_CONSOLE = "#0d1117"
+    BG_PROGRESS = "#2a2a4a"
+    BG_DISABLED = "#3a3a5c"
+
+    ACCENT = "#00b4d8"
+    ACCENT_DARK = "#0077b6"
+    SUCCESS = "#2ecc71"
+    WARNING = "#f39c12"
+    ERROR = "#e74c3c"
+
+    TEXT_PRIMARY = "#e0e0e0"
+    TEXT_SECONDARY = "#8892b0"
+    TEXT_DISABLED = "#666666"
+
+    BORDER = "#2a4a7f"
+    BORDER_FOCUS = "#00b4d8"
+    BORDER_ERROR = "#e74c3c"
+
+    LOG_INFO = "#c9d1d9"
+    LOG_WARN = "#f39c12"
+    LOG_ERROR = "#e74c3c"
+    LOG_OK = "#2ecc71"
+
+
+class Fonts:
+    TITLE_FAMILY = "Microsoft YaHei UI"
+    BODY_FAMILY = "Microsoft YaHei UI"
+    CONSOLE_FAMILY = "Consolas"
+
+    TITLE_SIZE = 18
+    BODY_SIZE = 14
+    SMALL_SIZE = 12
+    CONSOLE_SIZE = 12
+
+
+class Sizes:
+    WINDOW_WIDTH = 900
+    WINDOW_HEIGHT = 650
+    WINDOW_MIN_WIDTH = 800
+    WINDOW_MIN_HEIGHT = 550
+
+    TITLE_BAR_HEIGHT = 40
+    URL_INPUT_HEIGHT = 44
+    BUTTON_HEIGHT = 36
+    INPUT_HEIGHT = 36
+    PROGRESS_HEIGHT = 20
+
+    BORDER_RADIUS = 6
+    CARD_RADIUS = 8
+    PROGRESS_RADIUS = 10
+
+    PADDING_X = 16
+    PADDING_Y = 12
+    CARD_PADDING = 16
+    CONSOLE_PADDING = 8
+
+    LOGIN_DIALOG_WIDTH = 400
+    LOGIN_DIALOG_HEIGHT = 450
+    QR_CODE_SIZE = 200
+
+    CONSOLE_LINE_HEIGHT = 18
+    CONSOLE_MAX_LINES = 1000
