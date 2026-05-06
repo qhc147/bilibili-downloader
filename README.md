@@ -7,6 +7,7 @@
 - 扫码登录 B站账号，解锁高画质
 - 支持 360P ~ 4K 多种画质
 - 下载进度、速度、剩余时间实时显示
+- **一键检查更新 yt-dlp**（新增 v1.1.0）
 - 暗色主题界面
 
 ## 打包指南
@@ -93,6 +94,7 @@ C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:B站
 │   ├── main.py
 │   ├── auth/           # B站登录认证
 │   ├── downloader/     # 视频下载核心
+│   ├── updater/        # yt-dlp 更新模块 (v1.1.0 新增)
 │   └── ui/             # GUI 界面
 ├── python/             # (构建后生成) 嵌入式 Python
 ├── ffmpeg/             # (构建后生成) ffmpeg

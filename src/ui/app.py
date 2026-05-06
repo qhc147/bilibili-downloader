@@ -1,4 +1,5 @@
 import os
+import sys
 import customtkinter as ctk
 from src.ui.theme import Colors, Fonts, Sizes
 from src.ui.components.console import ConsolePanel
@@ -8,6 +9,7 @@ from src.ui.components.download_panel import DownloadPanel
 from src.downloader.bilibili_api import BilibiliAPI
 from src.downloader.downloader import Downloader
 from src.auth.bilibili_auth import BilibiliAuth
+from src.updater.update_manager import UpdateManager
 
 
 class App(ctk.CTk):
@@ -25,6 +27,7 @@ class App(ctk.CTk):
         self._auth = BilibiliAuth()
         self._api = BilibiliAPI(cookie_path=self._auth.get_netscape_cookie_path())
         self._downloader = Downloader(cookie_path=self._auth.get_netscape_cookie_path())
+        self._update_manager = UpdateManager(self)
         self._current_video_url = None
 
         self._build_layout()
@@ -82,6 +85,16 @@ class App(ctk.CTk):
         )
         self.login_status_label.pack(side="left", padx=(0, 8))
 
+        self.update_button = ctk.CTkButton(
+            right_frame, text="检查更新", width=80, height=30,
+            font=(Fonts.BODY_FAMILY, Fonts.SMALL_SIZE),
+            fg_color="transparent", border_color=Colors.ACCENT,
+            border_width=1, hover_color=Colors.BG_CARD,
+            text_color=Colors.ACCENT,
+            command=self._on_check_update_click
+        )
+        self.update_button.pack(side="left", padx=(0, 8))
+
         self.login_button = ctk.CTkButton(
             right_frame, text="登录", width=60, height=30,
             font=(Fonts.BODY_FAMILY, Fonts.SMALL_SIZE),
@@ -117,6 +130,10 @@ class App(ctk.CTk):
             self.console.log(f"解析失败：{data}", "error")
 
     def _on_download(self, quality: str):
+        if self._update_manager.is_busy():
+            self.console.log("更新进行中，请稍候...", "warn")
+            return
+
         if not self._current_video_url:
             self.console.log("请先解析视频链接。", "warn")
             return
@@ -163,3 +180,122 @@ class App(ctk.CTk):
             self._api = BilibiliAPI(cookie_path=cookie_path)
             self._downloader = Downloader(cookie_path=cookie_path)
             self._downloader.output_dir = current_output_dir
+
+    def _on_check_update_click(self):
+        """用户点击「检查更新」按钮"""
+        if self._update_manager.is_busy():
+            self.console.log("操作进行中，请稍候...", "warn")
+            return
+
+        # 禁用按钮，显示「检查中...」
+        self.update_button.configure(text="检查中...", state="disabled")
+        self.console.log("正在检查 yt-dlp 更新...")
+
+        # 后台检查
+        self._update_manager.check_update(
+            on_result=lambda success, data: self.after(0, self._on_check_result, success, data)
+        )
+
+    def _on_check_result(self, success: bool, data):
+        """检查更新结果回调"""
+        # 恢复按钮
+        self.update_button.configure(text="检查更新", state="normal")
+
+        if not success:
+            # 网络错误
+            from src.ui.components.update_dialog import NetworkErrorDialog
+            NetworkErrorDialog(self, error_message=str(data))
+            self.console.log(f"检查更新失败：{data}", "error")
+            return
+
+        version_info = data
+        if not version_info.has_update:
+            # 已是最新版本
+            from src.ui.components.update_dialog import AlreadyLatestDialog
+            AlreadyLatestDialog(self, version=version_info.current)
+            self.console.log(f"当前版本 {version_info.current} 已是最新版本", "ok")
+            return
+
+        # 有新版本
+        from src.ui.components.update_dialog import UpdateAvailableDialog
+        UpdateAvailableDialog(
+            self,
+            current_version=version_info.current,
+            latest_version=version_info.latest,
+            changelog=version_info.changelog,
+            on_confirm=self._on_confirm_update,
+            on_cancel=lambda: self.console.log("已取消更新", "warn")
+        )
+        self.console.log(f"发现新版本：{version_info.latest}", "ok")
+
+    def _on_confirm_update(self):
+        """用户确认更新"""
+        from src.ui.components.update_dialog import ProgressDialog
+
+        # 显示进度对话框
+        progress_dialog = ProgressDialog(self)
+
+        # 禁用检查更新按钮和下载按钮
+        self.update_button.configure(state="disabled")
+        self.download_panel.set_downloading(True)  # 禁用下载功能
+
+        self.console.log("开始更新 yt-dlp...")
+
+        def on_progress(status: str):
+            self.after(0, progress_dialog.update_progress, 0.5, status)
+
+        def on_complete(success: bool, message: str):
+            self.after(0, self._on_update_complete, success, message, progress_dialog)
+
+        self._update_manager.start_update(on_progress, on_complete)
+
+    def _on_update_complete(self, success: bool, message: str, progress_dialog):
+        """更新完成回调"""
+        progress_dialog.destroy()
+
+        # 恢复按钮状态
+        self.update_button.configure(state="normal")
+        self.download_panel.set_downloading(False)
+
+        if success:
+            # 更新成功
+            from src.ui.components.update_dialog import UpdateSuccessDialog
+            import yt_dlp
+            new_version = yt_dlp.version.__version__
+
+            # 重新初始化 yt-dlp 相关模块，确保使用新版本
+            current_output_dir = self._downloader.output_dir
+            cookie_path = self._auth.get_netscape_cookie_path()
+            self._api = BilibiliAPI(cookie_path=cookie_path)
+            self._downloader = Downloader(cookie_path=cookie_path)
+            self._downloader.output_dir = current_output_dir
+
+            UpdateSuccessDialog(
+                self,
+                version=new_version,
+                on_restart=self._on_restart_app,
+                on_later=lambda: self.console.log("请稍后手动重启软件", "warn")
+            )
+            self.console.log(f"更新完成！新版本：{new_version}", "ok")
+        else:
+            # 更新失败
+            from src.ui.components.update_dialog import UpdateFailedDialog
+            # 从错误信息中提取备份路径（如果有）
+            backup_path = "未知"
+            if "备份路径" in message or "备份位置" in message:
+                # 简单提取
+                lines = message.split("\n")
+                for line in lines:
+                    if "备份路径" in line or "backup_path" in line:
+                        parts = line.split(":")
+                        if len(parts) > 1:
+                            backup_path = parts[-1].strip()
+                            break
+
+            UpdateFailedDialog(self, error_message=message, backup_path=backup_path)
+            self.console.log(f"更新失败：{message}", "error")
+
+    def _on_restart_app(self):
+        """重启软件"""
+        self.console.log("正在关闭软件，请手动重启...", "warn")
+        sys.exit(0)

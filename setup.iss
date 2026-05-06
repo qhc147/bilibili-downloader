@@ -1,7 +1,7 @@
 ﻿; B站视频下载器 - Inno Setup 安装脚本
 
 #define MyAppName "B站视频下载器"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "BiliDownloader"
 #define MyAppExeName "B站视频下载器.exe"
 
@@ -13,6 +13,7 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
+DisableDirPage=no
 OutputDir=output
 OutputBaseFilename=B站视频下载器_v{#MyAppVersion}_Setup
 Compression=lzma2/ultra64
