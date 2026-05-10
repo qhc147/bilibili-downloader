@@ -35,6 +35,7 @@ class App(ctk.CTk):
         if self._auth.is_logged_in:
             self.login_status_label.configure(text="已登录", text_color=Colors.SUCCESS)
             self.login_button.configure(text="已登录", state="disabled")
+            self.logout_button.configure(state="normal")
             self.console.log("已检测到登录状态。", "ok")
 
     def _build_layout(self):
@@ -105,6 +106,17 @@ class App(ctk.CTk):
         )
         self.login_button.pack(side="left")
 
+        self.logout_button = ctk.CTkButton(
+            right_frame, text="退出登录", width=80, height=30,
+            font=(Fonts.BODY_FAMILY, Fonts.SMALL_SIZE),
+            fg_color="transparent", border_color=Colors.ACCENT,
+            border_width=1, hover_color=Colors.BG_CARD,
+            text_color=Colors.ACCENT,
+            command=self._on_logout_click,
+            state="disabled"
+        )
+        self.logout_button.pack(side="left", padx=(8, 0))
+
     def _on_parse_url(self, url: str):
         self.console.log(f"开始解析：{url}")
         self.url_input.set_loading(True)
@@ -171,15 +183,42 @@ class App(ctk.CTk):
         from src.ui.components.login_dialog import LoginDialog
         LoginDialog(self, auth=self._auth, on_login_success=self._on_login_success)
 
+    def _on_logout_click(self):
+        if self.download_panel._is_downloading:
+            self.console.log("下载中不可退出登录", "warn")
+            return
+
+        try:
+            self._auth.logout()
+        except Exception as e:
+            self.console.log(f"退出登录失败：{e}", "error")
+            return
+
+        self.login_status_label.configure(text="未登录", text_color=Colors.TEXT_SECONDARY)
+        self.login_button.configure(text="登录", state="normal")
+        self.logout_button.configure(state="disabled")
+
+        self._current_video_url = None
+        self.video_info.show_placeholder()
+
+        self._downloader.cancel()
+        self._reinit_api(cookie_path=None)
+
+        self.console.log("已退出登录", "ok")
+
     def _on_login_success(self, cookie_path: str = None):
         self.login_status_label.configure(text="已登录", text_color=Colors.SUCCESS)
         self.login_button.configure(text="已登录", state="disabled")
+        self.logout_button.configure(state="normal")
         self.console.log("登录成功！", "ok")
         if cookie_path:
-            current_output_dir = self._downloader.output_dir
-            self._api = BilibiliAPI(cookie_path=cookie_path)
-            self._downloader = Downloader(cookie_path=cookie_path)
-            self._downloader.output_dir = current_output_dir
+            self._reinit_api(cookie_path)
+
+    def _reinit_api(self, cookie_path):
+        current_output_dir = self._downloader.output_dir
+        self._api = BilibiliAPI(cookie_path=cookie_path)
+        self._downloader = Downloader(cookie_path=cookie_path)
+        self._downloader.output_dir = current_output_dir
 
     def _on_check_update_click(self):
         """用户点击「检查更新」按钮"""
@@ -264,11 +303,8 @@ class App(ctk.CTk):
             new_version = yt_dlp.version.__version__
 
             # 重新初始化 yt-dlp 相关模块，确保使用新版本
-            current_output_dir = self._downloader.output_dir
             cookie_path = self._auth.get_netscape_cookie_path()
-            self._api = BilibiliAPI(cookie_path=cookie_path)
-            self._downloader = Downloader(cookie_path=cookie_path)
-            self._downloader.output_dir = current_output_dir
+            self._reinit_api(cookie_path)
 
             UpdateSuccessDialog(
                 self,

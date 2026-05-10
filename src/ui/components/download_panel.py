@@ -24,6 +24,7 @@ class DownloadPanel(ctk.CTkFrame):
 
         self._on_download = on_download
         self._on_cancel = on_cancel
+        self._is_downloading = False
         app_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         self._output_dir = os.path.join(app_root, "output")
 
@@ -170,6 +171,7 @@ class DownloadPanel(ctk.CTkFrame):
         return self.quality_var.get()
 
     def set_downloading(self, active: bool):
+        self._is_downloading = active
         if active:
             self.download_btn.grid_remove()
             self.cancel_btn.grid()
