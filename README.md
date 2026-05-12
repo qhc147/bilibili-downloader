@@ -83,7 +83,6 @@ C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /win32ico
 ## 作者
 
 - **qhc147** — 开发者
-- Claude — AI 辅助开发
 
 ## 目录结构
 
