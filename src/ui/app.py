@@ -21,6 +21,8 @@ class App(ctk.CTk):
         self.minsize(Sizes.WINDOW_MIN_WIDTH, Sizes.WINDOW_MIN_HEIGHT)
         self.configure(fg_color=Colors.BG_MAIN)
 
+        self._set_icon()
+
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
@@ -37,6 +39,16 @@ class App(ctk.CTk):
             self.login_button.configure(text="已登录", state="disabled")
             self.logout_button.configure(state="normal")
             self.console.log("已检测到登录状态。", "ok")
+
+    def _set_icon(self):
+        app_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        icon_path = os.path.join(app_root, "logo", "app.ico")
+        if os.path.exists(icon_path):
+            try:
+                self.iconbitmap(icon_path)
+                self.after(200, lambda: self.iconbitmap(icon_path))
+            except Exception:
+                pass
 
     def _build_layout(self):
         self.grid_rowconfigure(0, weight=0)

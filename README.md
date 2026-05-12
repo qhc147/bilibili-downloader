@@ -71,8 +71,10 @@ ffmpeg/
 #### 3. 编译启动器
 
 ```
-C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:B站视频下载器.exe launcher.cs
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /win32icon:logo\app.ico /out:B站视频下载器.exe launcher.cs
 ```
+
+> 注意：`logo\app.ico` 已包含在仓库中，无需额外准备。
 
 #### 4. 打包
 
@@ -88,6 +90,8 @@ C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:B站
 ```
 ├── build.bat           # 一键构建脚本
 ├── launcher.cs         # C# 启动器源码
+├── logo/               # 应用图标资源
+│   └── app.ico         # 程序图标（exe/窗口/快捷方式）
 ├── requirements.txt    # Python 依赖清单
 ├── setup.iss           # Inno Setup 打包配置
 ├── src/                # Python 源代码
