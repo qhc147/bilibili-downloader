@@ -1,5 +1,6 @@
 import threading
 import yt_dlp
+from src.downloader import friendly_error
 
 
 class BilibiliAPI:
@@ -26,7 +27,7 @@ class BilibiliAPI:
                     callback(True, self._normalize_info(info))
             except Exception as e:
                 if callback:
-                    callback(False, str(e))
+                    callback(False, friendly_error(str(e)))
 
         t = threading.Thread(target=_run, daemon=True)
         t.start()

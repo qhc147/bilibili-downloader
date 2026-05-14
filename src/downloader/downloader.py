@@ -1,6 +1,7 @@
 import os
 import threading
 import yt_dlp
+from src.downloader import friendly_error
 
 
 class Downloader:
@@ -66,7 +67,7 @@ class Downloader:
                     on_complete(False, "下载已取消")
             except Exception as e:
                 if on_complete:
-                    on_complete(False, str(e))
+                    on_complete(False, friendly_error(str(e)))
 
         self._current_thread = threading.Thread(target=_run, daemon=True)
         self._current_thread.start()
