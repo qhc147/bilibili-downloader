@@ -10,6 +10,7 @@ from src.downloader.bilibili_api import BilibiliAPI
 from src.downloader.downloader import Downloader
 from src.auth.bilibili_auth import BilibiliAuth
 from src.updater.update_manager import UpdateManager
+from src.ui.components.update_dialog import WarningDialog
 
 
 class App(ctk.CTk):
@@ -160,6 +161,7 @@ class App(ctk.CTk):
 
         if not self._current_video_url:
             self.console.log("请先解析视频链接。", "warn")
+            WarningDialog(self, "提示", "请先粘贴链接并点击解析按钮，解析完成后再下载")
             return
 
         output_dir = self.download_panel.get_output_dir()

@@ -3,6 +3,8 @@ def friendly_error(msg: str) -> str:
         if "Bangumi" in msg or "bangumi" in msg:
             return "该番剧需要大会员才能下载，当前账号无权限访问此内容"
         return "无法获取视频流，可能需要大会员或该视频已下架"
+    if "purchase" in msg.lower() and "course" in msg.lower():
+        return "该课程需要登录已购买的账号才能下载。如已登录仍报错，请退出后重新扫码登录"
     if "geo" in msg.lower() or "not available in your" in msg.lower():
         return "该视频存在地区限制，当前网络无法访问"
     if "login" in msg.lower() or "credential" in msg.lower():

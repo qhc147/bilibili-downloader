@@ -196,6 +196,45 @@ class AlreadyLatestDialog(BaseUpdateDialog):
         ).pack(pady=(0, 20))
 
 
+class WarningDialog(BaseUpdateDialog):
+
+    def __init__(self, parent, title: str, message: str, **kwargs):
+        super().__init__(parent, title, 400, 180, **kwargs)
+
+        self._build_ui(title, message)
+        self.protocol("WM_DELETE_WINDOW", self._close)
+
+        self.after(3000, self._close)
+
+    def _build_ui(self, title: str, message: str):
+        ctk.CTkLabel(
+            self,
+            text=f"⚠  {title}",
+            font=(Fonts.BODY_FAMILY, Fonts.BODY_SIZE, "bold"),
+            text_color=Colors.WARNING
+        ).pack(pady=(20, 12))
+
+        ctk.CTkLabel(
+            self,
+            text=message,
+            font=(Fonts.BODY_FAMILY, Fonts.SMALL_SIZE),
+            text_color=Colors.TEXT_SECONDARY,
+            wraplength=360
+        ).pack(pady=(0, 16))
+
+        ctk.CTkButton(
+            self,
+            text="确定",
+            width=100,
+            height=Sizes.BUTTON_HEIGHT,
+            font=(Fonts.BODY_FAMILY, Fonts.BODY_SIZE),
+            fg_color=Colors.ACCENT,
+            hover_color=Colors.ACCENT_DARK,
+            text_color=Colors.TEXT_PRIMARY,
+            command=self._close
+        ).pack(pady=(0, 20))
+
+
 class ProgressDialog(BaseUpdateDialog):
     """进度对话框"""
 
