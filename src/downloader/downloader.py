@@ -1,7 +1,12 @@
 import os
+import time
+import random
 import threading
 import yt_dlp
 from src.downloader import friendly_error
+
+MAX_RETRIES = 3
+RETRY_BASE_DELAY = 5
 
 
 class Downloader:
@@ -21,7 +26,7 @@ class Downloader:
     def output_dir(self, value: str):
         self._output_dir = value
 
-    def download(self, url: str, quality: str = "80", on_progress=None, on_complete=None):
+    def download(self, url: str, quality: str = "80", on_progress=None, on_complete=None, on_retry=None):
         self._cancel_event.clear()
 
         def _progress_hook(d):
@@ -53,15 +58,42 @@ class Downloader:
                     "quiet": True,
                     "no_warnings": True,
                     "ffmpeg_location": self._ffmpeg_dir,
+                    "retries": 3,
+                    "fragment_retries": 5,
                 }
                 if self._cookie_path:
                     opts["cookiefile"] = self._cookie_path
 
-                with yt_dlp.YoutubeDL(opts) as ydl:
-                    ydl.download([url])
+                last_error = None
+                for attempt in range(MAX_RETRIES):
+                    if self._cancel_event.is_set():
+                        raise yt_dlp.utils.DownloadCancelled()
+                    try:
+                        with yt_dlp.YoutubeDL(opts) as ydl:
+                            ydl.download([url])
+                        last_error = None
+                        break
+                    except yt_dlp.utils.DownloadCancelled:
+                        raise
+                    except Exception as e:
+                        last_error = e
+                        if attempt < MAX_RETRIES - 1:
+                            delay = RETRY_BASE_DELAY * (attempt + 1) + random.uniform(1, 3)
+                            if on_retry:
+                                on_retry(attempt + 1, MAX_RETRIES, delay)
+                            elapsed = 0.0
+                            while elapsed < delay:
+                                if self._cancel_event.is_set():
+                                    raise yt_dlp.utils.DownloadCancelled()
+                                time.sleep(min(0.5, delay - elapsed))
+                                elapsed += 0.5
 
-                if on_complete:
-                    on_complete(True, "下载完成")
+                if last_error:
+                    if on_complete:
+                        on_complete(False, friendly_error(str(last_error)))
+                else:
+                    if on_complete:
+                        on_complete(True, "下载完成")
             except yt_dlp.utils.DownloadCancelled:
                 if on_complete:
                     on_complete(False, "下载已取消")

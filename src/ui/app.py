@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 import customtkinter as ctk
 from src.ui.theme import Colors, Fonts, Sizes
 from src.ui.components.console import ConsolePanel
@@ -38,6 +39,7 @@ class App(ctk.CTk):
         self._batch_urls = []
         self._batch_index = 0
         self._batch_cancelled = False
+        self._batch_after_id = None
 
         self._build_layout()
 
@@ -231,13 +233,17 @@ class App(ctk.CTk):
                 status = eta if eta else f"{progress * 100:.1f}%"
                 self.after(0, self.download_panel.update_progress, progress, status, speed)
 
+            def on_retry(attempt, max_retries, delay):
+                self.after(0, self.console.log, f"下载失败，正在重试（{attempt}/{max_retries}），等待 {delay:.0f} 秒...", "warn")
+
             def on_complete(success, message):
                 self.after(0, self._on_download_complete, success, message)
 
             self._downloader.download(
                 self._current_video_url, quality,
                 on_progress=on_progress,
-                on_complete=on_complete
+                on_complete=on_complete,
+                on_retry=on_retry
             )
 
     def _on_download_complete(self, success: bool, message: str):
@@ -265,17 +271,25 @@ class App(ctk.CTk):
             status = f"[{self._batch_index + 1}/{total}] {eta}" if eta else f"[{self._batch_index + 1}/{total}] {progress * 100:.1f}%"
             self.after(0, self.download_panel.update_progress, overall, status, speed)
 
+        def on_retry(attempt, max_retries, delay):
+            self.after(0, self.console.log, f"第 {self._batch_index + 1} 集下载失败，正在重试（{attempt}/{max_retries}），等待 {delay:.0f} 秒...", "warn")
+
         def on_complete(success, message):
             self.after(0, self._on_batch_item_complete, success, message, quality)
 
-        self._downloader.download(url, quality, on_progress=on_progress, on_complete=on_complete)
+        self._downloader.download(url, quality, on_progress=on_progress, on_complete=on_complete, on_retry=on_retry)
 
     def _on_batch_item_complete(self, success: bool, message: str, quality: str):
         if self._batch_cancelled:
             return
         if success:
             self._batch_index += 1
-            self._download_next_in_batch(quality)
+            if self._batch_index < len(self._batch_urls):
+                delay_ms = int(random.uniform(3, 8) * 1000)
+                self.console.log(f"等待 {delay_ms / 1000:.1f} 秒后继续下载...")
+                self._batch_after_id = self.after(delay_ms, self._download_next_in_batch, quality)
+            else:
+                self._download_next_in_batch(quality)
         else:
             self.download_panel.reset()
             self.console.log(f"第 {self._batch_index + 1} 集下载失败：{message}", "error")
@@ -290,6 +304,9 @@ class App(ctk.CTk):
     def _on_cancel_download(self):
         self._downloader.cancel()
         self._batch_cancelled = True
+        if self._batch_after_id:
+            self.after_cancel(self._batch_after_id)
+            self._batch_after_id = None
         self._batch_urls = []
         self._batch_index = 0
         self.console.log("正在取消下载...", "warn")
