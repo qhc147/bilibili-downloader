@@ -1,7 +1,7 @@
 ﻿; B站视频下载器 - Inno Setup 安装脚本
 
 #define MyAppName "B站视频下载器"
-#define MyAppVersion "1.1.1"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "BiliDownloader"
 #define MyAppExeName "B站视频下载器.exe"
 
@@ -49,10 +49,6 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDi
 Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Description: "立即启动 {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}\src\__pycache__"
-Type: filesandordirs; Name: "{app}\src\ui\__pycache__"
-Type: filesandordirs; Name: "{app}\src\ui\components\__pycache__"
-Type: filesandordirs; Name: "{app}\src\downloader\__pycache__"
-Type: filesandordirs; Name: "{app}\src\auth\__pycache__"
+Type: filesandordirs; Name: "{app}\src"
 Type: filesandordirs; Name: "{app}\config"
 Type: filesandordirs; Name: "{app}\output"

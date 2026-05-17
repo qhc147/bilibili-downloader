@@ -41,6 +41,7 @@ class VideoInfo(ctk.CTkFrame):
             ("author", "UP主"),
             ("duration", "时长"),
             ("views", "播放"),
+            ("episodes", "集数"),
         ]
         for i, (key, label_text) in enumerate(meta_fields, start=1):
             row_frame = ctk.CTkFrame(self._info_frame, fg_color="transparent")
@@ -64,7 +65,7 @@ class VideoInfo(ctk.CTkFrame):
         self._info_frame.pack_forget()
         self._placeholder.place(relx=0.5, rely=0.5, anchor="center")
 
-    def show_info(self, title: str, author: str = "", duration: str = "", views: str = "", thumbnail_image=None):
+    def show_info(self, title: str, author: str = "", duration: str = "", views: str = "", episodes: str = "", thumbnail_image=None):
         self._placeholder.place_forget()
         self._info_frame.pack(fill="both", expand=True)
 
@@ -72,6 +73,7 @@ class VideoInfo(ctk.CTkFrame):
         self._meta_labels["author"].configure(text=author)
         self._meta_labels["duration"].configure(text=duration)
         self._meta_labels["views"].configure(text=views)
+        self._meta_labels["episodes"].configure(text=episodes)
 
         if thumbnail_image:
             self._thumbnail_label.configure(image=thumbnail_image, text="")

@@ -119,3 +119,39 @@ class BilibiliAuth:
         netscape = self._cookie_path.replace(".txt", "_netscape.txt")
         if os.path.exists(netscape):
             os.remove(netscape)
+
+    def _load_cookies_for_request(self) -> dict:
+        try:
+            with open(self._cookie_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data.get("cookies", {})
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            return {}
+
+    def check_vip_status(self, callback=None):
+        def _check():
+            try:
+                cookies = self._load_cookies_for_request()
+                resp = self._session.get(
+                    "https://api.bilibili.com/x/web-interface/nav",
+                    cookies=cookies
+                )
+                result = resp.json()
+                if result.get("code") == 0:
+                    data = result.get("data", {})
+                    vip_info = {
+                        "vip_status": data.get("vipStatus", 0),
+                        "vip_type": data.get("vipType", 0),
+                    }
+                    if callback:
+                        callback(True, vip_info)
+                else:
+                    if callback:
+                        callback(False, {"vip_status": 0, "vip_type": 0})
+            except Exception:
+                if callback:
+                    callback(False, {"vip_status": 0, "vip_type": 0})
+
+        t = threading.Thread(target=_check, daemon=True)
+        t.start()
+        return t

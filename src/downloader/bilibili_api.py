@@ -33,6 +33,48 @@ class BilibiliAPI:
         t.start()
         return t
 
+    def extract_info_flat(self, url: str, callback=None):
+        def _run():
+            try:
+                opts = self._base_opts()
+                opts["extract_flat"] = "in_playlist"
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                if callback:
+                    callback(True, self._normalize_flat_info(info))
+            except Exception as e:
+                if callback:
+                    callback(False, friendly_error(str(e)))
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+        return t
+
+    def _normalize_flat_info(self, info: dict) -> dict:
+        if info.get("_type") == "playlist" or "entries" in info:
+            entries = [e for e in info.get("entries", []) if e is not None]
+            return {
+                "is_playlist": True,
+                "id": info.get("id", ""),
+                "title": info.get("title", "未知合集"),
+                "author": info.get("uploader", "未知UP主"),
+                "episode_count": len(entries),
+                "episodes": [
+                    {
+                        "index": i + 1,
+                        "title": entry.get("title", f"第{i+1}集"),
+                        "url": entry.get("url") or entry.get("webpage_url") or f"{info.get('webpage_url', '')}?p={i+1}",
+                        "duration": entry.get("duration", 0),
+                    }
+                    for i, entry in enumerate(entries)
+                ],
+                "webpage_url": info.get("webpage_url", ""),
+            }
+        return {
+            "is_playlist": False,
+            **self._normalize_info(info),
+        }
+
     def _normalize_info(self, info: dict) -> dict:
         duration_sec = info.get("duration", 0) or 0
         minutes, seconds = divmod(int(duration_sec), 60)

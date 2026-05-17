@@ -25,6 +25,7 @@ class DownloadPanel(ctk.CTkFrame):
         self._on_download = on_download
         self._on_cancel = on_cancel
         self._is_downloading = False
+        self._display_to_qn = dict(self._LABEL_TO_QN)
         app_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         self._output_dir = os.path.join(app_root, "output")
 
@@ -156,8 +157,38 @@ class DownloadPanel(ctk.CTkFrame):
         self.speed_label.grid(row=0, column=1, sticky="e")
 
     def _on_quality_change(self, choice: str):
-        qn = self._LABEL_TO_QN.get(choice, self.DEFAULT_QUALITY)
+        qn = self._display_to_qn.get(choice, self.DEFAULT_QUALITY)
         self.quality_var.set(qn)
+
+    def update_quality_options(self, vip_status: int = 0):
+        VIP_RECOMMEND = {"120", "112"}
+        NON_VIP_MARK = {"120", "116", "112"}
+
+        new_labels = []
+        self._display_to_qn = {}
+
+        for label, qn in self.QUALITY_OPTIONS:
+            if vip_status >= 1:
+                if qn in VIP_RECOMMEND:
+                    display = f"{label} ★推荐"
+                else:
+                    display = label
+            else:
+                if qn in NON_VIP_MARK:
+                    display = f"{label} (需大会员)"
+                else:
+                    display = label
+            new_labels.append(display)
+            self._display_to_qn[display] = qn
+
+        self.quality_menu.configure(values=new_labels)
+
+        default_qn = "112" if vip_status >= 1 else "80"
+        default_label = next(
+            (d for d, q in self._display_to_qn.items() if q == default_qn), new_labels[0]
+        )
+        self.quality_menu.set(default_label)
+        self.quality_var.set(default_qn)
 
     def _handle_download(self):
         if self._on_download:
